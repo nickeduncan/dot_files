@@ -17,30 +17,30 @@ set foldlevel=99
 call plug#begin('~/.vim/plugged')
 
 Plug 'mileszs/ack.vim'
+
 " git interface
 Plug 'tpope/vim-fugitive'
+
 " filesystem
 Plug 'scrooloose/nerdtree'
 Plug 'jistr/vim-nerdtree-tabs'
 Plug 'Xuyuanp/nerdtree-git-plugin'
 Plug 'kien/ctrlp.vim'
+Plug 'dkprice/vim-easygrep'
 
 "html
 Plug 'jtratner/vim-flavored-markdown'
 Plug 'suan/vim-instant-markdown'
 Plug 'nelstrom/vim-markdown-preview'
+
 "python syntax checker
 Plug 'nvie/vim-flake8'
 Plug 'vim-scripts/Pydiction'
 Plug 'vim-scripts/indentpython.vim'
 Plug 'scrooloose/syntastic'
 
-"auto-completion stuff
-Plug 'Valloric/YouCompleteMe'
-Plug 'klen/rope-vim'
-Plug 'ervandew/supertab'
-" code folding
-Plug 'tmhedberg/SimpylFold'
+"general syntax checker
+Plug 'skywind3000/asyncrun.vim'
 
 " colors
 Plug 'altercation/vim-colors-solarized'
@@ -50,6 +50,10 @@ Plug 'jnurmine/Zenburn'
 Plug 'tpope/vim-rails'
 Plug 'vim-ruby/vim-ruby'
 Plug 'tpope/vim-endwise'
+
+" javascript
+Plug 'pangloss/vim-javascript'
+Plug 'mxw/vim-jsx'
 
 call plug#end()
 
@@ -69,18 +73,6 @@ map <C-n> :NERDTreeToggle<CR>
 
 "I don't like swap files
 set noswapfile
-
-" python with virtualenv support
-py << EOF
-import os.path
-import sys
-import vim
-if 'VIRTUA_ENV' in os.environ:
-  project_base_dir = os.environ['VIRTUAL_ENV']
-  sys.path.insert(0, project_base_dir)
-  activate_this = os.path.join(project_base_dir,'bin/activate_this.py')
-  execfile(activate_this, dict(__file__=activate_this))
-EOF
 
 " it would b enice to set tag files by the active virtualenv here
 " :set tags=~/mytags "for ctags and tagslist
@@ -133,6 +125,21 @@ autocmd FileType python set foldmethod=indent
 "use space to open folds
 "----------Stop python PEP 8 stuff--------------
 
+"html suff"
+:filetype indent on
+:set filetype=html
+autocmd FileType html set shiftwidth=2
+autocmd FileType html set softtabstop=2
+autocmd FileType html set autoindent
+set et ""
+set sts=2
+set sw=2
+
+"css stuff"
+autocmd FileType scss set shiftwidth=2
+autocmd FileType scss set softtabstop=2
+autocmd FileType scss set autoindent
+
 "js stuff"
 autocmd FileType javascript setlocal shiftwidth=2 tabstop=2
 
@@ -145,4 +152,41 @@ autocmd FileType ruby set autoindent
 " auto open NERDTree
 autocmd vimenter * NERDTree
 
+" use Ag
+let g:ackprg = 'ag --nogroup --nocolor --column'
+
+" don't open first result in Ack
+cnoreabbrev Ack Ack!
+nnoremap <Leader>a :Ack!<Space>
+
+" CTRL-P config
+let g:ctrlp_cache_dir = $HOME . '/.cache/ctrlp'
+if executable('ag')
+	let g:ctrlp_user_command = 'ag %s -l --nocolor -g ""'
+endif
+
+" Ale config
+let g:ale_sign_error = '●' " Less aggressive than the default '>>'
+let g:ale_sign_warning = '.'
+let g:ale_lint_on_enter = 0 " Less distracting when opening a new file
+autocmd BufWritePost *.js AsyncRun -post=checktime ./node_modules/.bin/eslint --fix %
+
+" Remove trailing whitespace
+autocmd FileType c,cpp,java,php,ruby,html,scss,javascript autocmd BufWritePre <buffer> %s/\s\+$//e
+
 colors zenburn
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" MULTIPURPOSE TAB KEY
+" Indent if we're at the beginning of a line. Else, do completion.
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+function! InsertTabWrapper()
+    let col = col('.') - 1
+    if !col || getline('.')[col - 1] !~ '\k'
+        return "\<tab>"
+    else
+        return "\<c-p>"
+    endif
+endfunction
+inoremap <expr> <tab> InsertTabWrapper()
+inoremap <s-tab> <c-n>
