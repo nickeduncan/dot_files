@@ -3,6 +3,7 @@ set autoindent
 set number
 set showmode
 set encoding=utf-8
+set colorcolumn=100
 
 "split navigations
 nnoremap <C-J> <C-W><C-J>
